@@ -3,16 +3,6 @@
 #include<iostream>
 #include "Source.h"
 
-/*
-discussion questions for students:
-1) How would you *avoid* diagonals in the path? How do you purposely create them?
-    
-2) Why the "-1" in this line: if(currPath < pathPoints.size()-1)? Why is it needed?
-
-3) What's the difference between a struct and a class? Could we have used a class instead of a struct?
-    
-*/
-
 
 //create a struct: structs are like classes, but no functions (just variables)
 struct point {
@@ -25,13 +15,16 @@ class Bloon
 public:
     Bloon(int x, int y);
     ~Bloon();
-    void move(std::vector<point>myPath);
+    void move(std::vector<point>myPath, std::vector<Bloon*>BloonBag, std::vector<Bloon*>::iterator iter);
     void draw(sf::RenderWindow& window);
 
 private:
     int xpos;
     int ypos;
     int currPath;
+    sf::Texture redBloon;
+    sf::IntRect bloon;
+    sf::Sprite bloonRed;
 };
 
 
@@ -113,6 +106,9 @@ int main()
     pathPoints.push_back(p11);
     pathPoints.push_back(p12);
 
+    std::vector<Bloon*> BloonBag;
+    std::vector<Bloon*>::iterator iter;
+
 
     // create game window
     sf::RenderWindow window(sf::VideoMode(800, 800), "bloons");
@@ -127,13 +123,20 @@ int main()
     sf::Sprite field;
     field.setTexture(grass);
 
+    
+
     int currPath = 0; //begin heading towards the first point in the pathing vector
     int ticker = 0;
 
-    Bloon bloon1 = Bloon(-50, 7 * 50);
+    for (int i = 0; i < 10; i++) {
+        Bloon* bloon = new Bloon(-50 - (i * 50), 7 * 50);
+        BloonBag.push_back(bloon);
+    }
+
+    /*Bloon bloon1 = Bloon(-50, 7 * 50);
     Bloon bloon2 = Bloon(-100, 7 * 50);
     Bloon bloon3 = Bloon(-150, 7 * 50);
-    Bloon bloon4 = Bloon(-200, 7 * 50);
+    Bloon bloon4 = Bloon(-200, 7 * 50);*/
 
     // GAME LOOP----------------------------------------------------------------------------------------
     while (window.isOpen())
@@ -153,12 +156,10 @@ int main()
         //the path is stored as a series of points in a vector called "pathPoints"
 
         ticker++; //slow dem bloons down
-        if (ticker % 30 == 0) { //make 30 bigger to slow down baloon more
+        if (ticker % 2 == 0) { //make 30 bigger to slow down baloon more
 
-            bloon1.move(pathPoints);
-            bloon2.move(pathPoints);
-            bloon3.move(pathPoints);
-            bloon4.move(pathPoints);
+            for (iter = BloonBag.begin(); iter != BloonBag.end(); iter++) 
+                (*iter)->move(pathPoints,BloonBag,iter);
             
         }//end pathing algorithm**************************************************************
 
@@ -177,10 +178,8 @@ int main()
                 }
             }
 
-        bloon1.draw(window);
-        bloon2.draw(window);
-        bloon3.draw(window);
-        bloon4.draw(window);
+        for (iter = BloonBag.begin(); iter != BloonBag.end(); iter++)
+            (*iter)->draw(window);
         window.display();
     }
 
@@ -192,33 +191,52 @@ Bloon::Bloon(int x, int y)
     xpos = x;
     ypos = y;
     currPath = 0;
+    redBloon.loadFromFile("bloon.png");
+    bloon = sf::IntRect(0, 0, 50, 50);
+    bloonRed = sf::Sprite(redBloon, bloon);
 }
 
 Bloon::~Bloon()
 {
-
 }
 
-void Bloon::move(std::vector<point>myPath) {
+void Bloon::move(std::vector<point>myPath,std::vector<Bloon*>BloonBag, std::vector<Bloon*>::iterator iter) {
     //first check if you're at the turning point, move to next point if you are
     if ((xpos == myPath[currPath].x) && (ypos == myPath[currPath].y))
         if (currPath < myPath.size() - 1) //don't walk off end of vector!
             currPath++; //iterate to next point
+    
 
     //if not there yet, move our x towards x position of next junction
-    if (xpos < myPath[currPath].x)
+    if (xpos < myPath[currPath].x) {
+        //std::cout << xpos << " > ";
         xpos += 1;
-    if (xpos > myPath[currPath].x)
+        //std::cout << xpos << ".\n";
+    }
+    if (xpos > myPath[currPath].x) {
+        //std::cout << xpos << " > ";
         xpos -= 1;
+        //std::cout << xpos << ".\n";
+    }
     //and move our y towards y position of next junction
-    if (ypos < myPath[currPath].y)
+    if (ypos < myPath[currPath].y) {
+        //std::cout << ypos << " > ";
         ypos += 1;
-    if (ypos > myPath[currPath].y)
+        //std::cout << ypos << ".\n";
+    }
+    if (ypos > myPath[currPath].y) {
+        //std::cout << ypos << " > ";
         ypos -= 1;
+        //std::cout << ypos << ".\n";
+    }
+    for (iter = BloonBag.begin(); iter != BloonBag.end(); iter++)
+        if (xpos == 9 * 50 && ypos == 16 * 50) { 
+                (*iter)->~Bloon();
+        }
 }
 
 void Bloon::draw(sf::RenderWindow& window) {
-    sf::CircleShape bloon(25);
-    bloon.setFillColor(sf::Color(250, 0, 0));
-    bloon.setPosition(xpos, ypos);
+    //std::cout << xpos << ", " << ypos << "\n";
+    bloonRed.setPosition(xpos-50, ypos-50);
+    window.draw(bloonRed);
 }
