@@ -15,8 +15,9 @@ class Bloon
 public:
     Bloon(int x, int y);
     ~Bloon();
-    void move(std::vector<point>myPath, std::vector<Bloon*>BloonBag, std::vector<Bloon*>::iterator iter);
+    void move(std::vector<point>myPath);
     void draw(sf::RenderWindow& window);
+    int getPos();
 
 private:
     int xpos;
@@ -46,7 +47,7 @@ int map[16][16] = {
     0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,
     0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,
     0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0
+    0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0
 };
 
 
@@ -118,6 +119,11 @@ int main()
     sf::Sprite path;
     path.setTexture(stone);
 
+    sf::Texture spike;
+    spike.loadFromFile("spikes.png");
+    sf::Sprite spikes;
+    spikes.setTexture(spike);
+
     sf::Texture grass;
     grass.loadFromFile("grass.png");
     sf::Sprite field;
@@ -128,7 +134,7 @@ int main()
     int currPath = 0; //begin heading towards the first point in the pathing vector
     int ticker = 0;
 
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 100; i++) {
         Bloon* bloon = new Bloon(-50 - (i * 50), 7 * 50);
         BloonBag.push_back(bloon);
     }
@@ -156,10 +162,21 @@ int main()
         //the path is stored as a series of points in a vector called "pathPoints"
 
         ticker++; //slow dem bloons down
-        if (ticker % 2 == 0) { //make 30 bigger to slow down baloon more
+        if (ticker % 10 == 0) { //make 30 bigger to slow down baloon more
 
-            for (iter = BloonBag.begin(); iter != BloonBag.end(); iter++) 
-                (*iter)->move(pathPoints,BloonBag,iter);
+            for (iter = BloonBag.begin(); iter != BloonBag.end(); ) {
+                (*iter)->move(pathPoints);
+                if ((*iter)->getPos() == ((9 * 50), (16 * 50))) {
+                    (*iter)->~Bloon();
+                    delete* iter;
+                    iter = BloonBag.erase(iter);
+                    
+                }
+                else {
+                    ++iter;
+                }
+                
+            }
             
         }//end pathing algorithm**************************************************************
 
@@ -175,6 +192,10 @@ int main()
                 if (map[rows][cols] == 0) {
                     field.setPosition(cols * 50 + 5, rows * 50 + 5);
                     window.draw(field);
+                }
+                if (map[rows][cols] == 2) {
+                    spikes.setPosition(cols * 50, rows * 50);
+                    window.draw(spikes);
                 }
             }
 
@@ -200,7 +221,7 @@ Bloon::~Bloon()
 {
 }
 
-void Bloon::move(std::vector<point>myPath,std::vector<Bloon*>BloonBag, std::vector<Bloon*>::iterator iter) {
+void Bloon::move(std::vector<point>myPath) {
     //first check if you're at the turning point, move to next point if you are
     if ((xpos == myPath[currPath].x) && (ypos == myPath[currPath].y))
         if (currPath < myPath.size() - 1) //don't walk off end of vector!
@@ -229,14 +250,14 @@ void Bloon::move(std::vector<point>myPath,std::vector<Bloon*>BloonBag, std::vect
         ypos -= 1;
         //std::cout << ypos << ".\n";
     }
-    for (iter = BloonBag.begin(); iter != BloonBag.end(); iter++)
-        if (xpos == 9 * 50 && ypos == 16 * 50) { 
-                (*iter)->~Bloon();
-        }
 }
 
 void Bloon::draw(sf::RenderWindow& window) {
     //std::cout << xpos << ", " << ypos << "\n";
     bloonRed.setPosition(xpos-50, ypos-50);
     window.draw(bloonRed);
+}
+
+int Bloon::getPos() {
+    return xpos, ypos;
 }
